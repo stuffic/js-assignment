@@ -136,7 +136,14 @@ function deleteRight(right)
     }
     else 
     {
-     all_rights.splice(all_rights.indexOf(right), 1);
+        all_rights.splice(all_rights.indexOf(right), 1);
+        all_groups.forEach(function (obj)
+        {
+            if (obj.rights.indexOf(right) != -1)
+            {
+                obj.rights.splice(obj.rights.indexOf(right), 1);
+            }
+        })
     }
 }
 
@@ -175,6 +182,13 @@ function deleteGroup(group)
     else
     {
         all_groups.splice(all_groups.indexOf(group), 1);
+        all_users.forEach(function (obj)
+        {
+            if (obj.groups.indexOf(group) != -1)
+            {
+                obj.groups.splice(obj.groups.indexOf(group), 1);
+            }
+        })
     }
 }
 
@@ -241,10 +255,71 @@ function removeRightFromGroup(right, group)
     }
 }
 
-function login(username, password) { }
+let currentsession =
+{
+    status: false,
+    user: undefined
+};
 
-function currentUser() { }
+function login(username, password)
+{
+    let pos = all_users.map(function (obj) { return obj.name; }).indexOf(username);
 
-function logout() { }
+    if ((pos != -1) && (currentsession.status === false)) {
+        if (all_users[pos].password === password)
+        {
+            currentsession.status = true;
+            currentsession.user = all_users[pos];
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
 
-function isAuthorized(user, right) { }
+function currentUser()
+{
+    return currentsession.user;
+}
+
+function logout()
+{
+    currentsession.status = false;
+    currentsession.user = undefined;
+}
+
+function isAuthorized(user, right)
+{
+    if (!user) {
+        throw new Error("Некорректно введенные данные");
+    }
+    else if (!right)
+        throw new Error("Некорректно введенные данные");
+
+    if ((all_rights.indexOf(right) === -1) || (all_users.indexOf(user) === -1)) {
+        throw new Error("Таких пользователя/права не существует");
+    }
+
+    let user_groups = user.groups;
+    let user_have_right = false;
+
+    user_groups.forEach(function (obj)
+    {
+        if (all_groups.indexOf(obj) != -1)
+        {
+            let pos = all_groups.indexOf(obj);
+            if (all_groups[pos].rights.indexOf(right) != -1)
+            {
+                user_have_right = true;
+            }
+        }
+    });
+
+    return user_have_right;
+}
